@@ -1,0 +1,110 @@
+//2022Dec10 12
+
+( original Oct,Nov 2018 -- but not publically deployable )
+
+
+Notes from the simplification of  websunmap  to  min-dep-websnmp.
+
+- websunmap   commits  2020: Apr04 Apr05 Oct12 Oct13   2021: Mar10 Mar24
+  - based on a project outline ala  markdown  (Eric Normand video course),
+    thus with "flavor" of  react.js  et. al. project, but
+    _WITHOUT_ explicitly invoking any such functions
+
+  - built with  shadow-cljs  ( ==> requiring  node.js  and  npm !)
+
+  - _suspect_  package-lock.json  (828 lines) lead to >1 'depandobot' issues!
+
+Not satisfied with:  (spurious?) security issues tied to various modules
+(e.g. elliptic) which AFAICT are not refernced directly or inirectly from
+project cljs code; nor with the (netlify) Ubuntu "build image" obsolescence
+issues that are not obvious how to resolve!
+
+
+Results:
+
+- min-dep-websnmp
+  - 4 files in dir: index.html, worldmap.jpg, worldmap_night.jpg, main.js
+  - built with  cljs.jar  (i.e. no tool install required)
+  - deployed with single push to remote repo
+
+  Nearly the same cljs code as  websnmp:
+  - sunmap.cljs
+1c1
+< (ns websunmap.sunmap)
+---
+> (ns mnd-snmp.sunmap)
+
+  - main.cljs
+      Namespace ala above, replaced  (main!) (reload!)  fns with inline calls
+         (init-state )  (paint-only)  (js/setInterval paint-only ntrvl)
+      and other function-neutral changes (id renaming, inlining).
+
+
+Process:
+
+Began with the  https://clojurescript.org/guides/quick-start  examples
+and worked through the following:
+
+- hello-world example  (wi.   --optimizations advanced  )  ==> out/main.js
+  Can be run with (implicit html !!) a single js file.
+
+- h-w   test-local-deploy  files from hello-world build
+
+- h-w2  ditto  but with _explicit_  index.html
+
+- xcurl
+  Possible to use  curl  to extract (netlify built) files from  sleepy...
+    |---index.html
+    |---compiledjs
+    |   |___main.js    # 111535 Nov 25 16:42  ...0afd80709  (date curled)
+    |---worldmap_night.jpg
+    |___worldmap.jpg
+  and to use  cljs.jsr --serve  serving same from local dir!
+
+- nn-snmp
+  Build locally modified  (main.cljs, sunmap.cljs ==> main.gs)  with  cljs.jar
+
+  - test deploy 4 files to local dir; serve with cljs.jar
+  (see  ex-deploy.zip  shasum main.js  ...dba65156c)
+      |---index.html
+      |---out
+      |   |___main.js     # 113880 Nov 28 09:46  ...dba65156c
+      |---worldmap_night.jpg
+      |___worldmap.jpg
+
+- min-dep-websnmp
+  -  rename dir, rev (ns...); prepare for deploy to GitHub-Pages-enabled repo
+     (local repo contents )
+
+      |---index.html
+      |---out
+      |   |___main.js   # 113692 Dec  3 10:37  ...cfd6f0859
+      |---worldmap_night.jpg
+      |---worldmap.jpg
+      |___src
+          |___mnd_snmp
+              |---main.cljs
+              |___sunmap.cljs
+
+     Push only four files to remote repo:
+        index.html  out/main.js  worldmap_night.jpg  worldmap.jpg
+ 
+     Opening  https://lrngquest.github.io/min-dep-websnmp/  _failed_ and
+       browser log says:   404 on main.js  !!   Why?
+     (tried a couple of trial/error on path changes)
+ 
+
+  - _APPARENTLY_ the  main.js  MUST be in same dir as  index.html
+     Moved  out/main.js  to top level; retested, WORKS!
+
+     Working repo with finishing touches looks like:
+     |---index.html
+     |---LICENSE
+     |---README.md
+     |---main.js        # 113692 Dec  3 10:37  ...cfd6f0859
+     |---worldmap_night.jpg
+     |---worldmap.jpg
+     |___src
+         |___mnd_snmp
+             |---main.cljs
+             |___sunmap.cljs
